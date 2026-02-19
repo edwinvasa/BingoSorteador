@@ -6,15 +6,25 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
+import com.vecksoft.bingosorteador.R
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.vecksoft.bingosorteador.ui.components.AnimatedBallView
+import com.vecksoft.bingosorteador.ui.components.BallView
 import com.vecksoft.bingosorteador.ui.components.BasketView
 import com.vecksoft.bingosorteador.ui.components.BingoBoard
 import com.vecksoft.bingosorteador.ui.components.GameModeSelector
@@ -26,7 +36,6 @@ fun BingoScreen(
 ) {
 
     val view = LocalView.current
-
     DisposableEffect(Unit) {
         view.keepScreenOn = true
         onDispose {
@@ -36,10 +45,13 @@ fun BingoScreen(
 
     val currentBall = viewModel.previewBall ?: viewModel.currentBall
     val previousBall = viewModel.previousBall
-    //val remaining = viewModel.remainingPercentage
+    val remaining = viewModel.remainingPercentage
     val isAnimating = viewModel.isAnimating
+    val isMuted = viewModel.isMuted
+    val previewBall = viewModel.previewBall
 
     var animateResult by remember { mutableStateOf(false) }
+    var showGameModeSelector by remember { mutableStateOf(false) }
 
     val scale by animateFloatAsState(
         targetValue = if (animateResult) 1.3f else 1f,
@@ -68,26 +80,37 @@ fun BingoScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(18.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        Text(
-            text = "BINGO",
-            style = MaterialTheme.typography.headlineLarge
-        )
+        Box(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = stringResource(id = R.string.app_title),
+                style = MaterialTheme.typography.headlineLarge,
+                modifier = Modifier.align(Alignment.Center)
+            )
+            IconButton(
+                onClick = { showGameModeSelector = !showGameModeSelector },
+                modifier = Modifier.align(Alignment.CenterEnd),
+                enabled = !isAnimating
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = stringResource(id = R.string.configure_game_mode)
+                )
+            }
+        }
 
         if (viewModel.isRepeating) {
-            Spacer(modifier = Modifier.height(8.dp))
-
             Text(
                 text = "Repitiendo balotas...",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary
             )
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
 
         Column(
             modifier = Modifier
@@ -96,43 +119,66 @@ fun BingoScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            GameModeSelector(
-                currentMode = viewModel.currentMode,
-                onModeSelected = { mode ->
-                    viewModel.setMode(mode)
-                }
-            )
+            AnimatedVisibility(visible = showGameModeSelector) {
+                GameModeSelector(
+                    currentMode = viewModel.currentMode,
+                    isMuted = isMuted,
+                    onModeSelected = { viewModel.setMode(it) },
+                    onDurationChange = { viewModel.setAnimationDuration(it) },
+                    onMuteToggle = { viewModel.toggleMute() },
+                    onBallColorChange = { color -> viewModel.setBallColor(color) },
+                    enabled = !isAnimating,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+            }
 
             BasketView(
                 isAnimating = isAnimating
             )
-
+/*
             Text(
-                text = "Balota actual",
+                text = "Actual",
                 style = MaterialTheme.typography.titleMedium
             )
+*/
+            Box(
+                modifier = Modifier.size(220.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                if (isAnimating) {
+                    AnimatedBallView(
+                        ball = previewBall,
+                        color = viewModel.currentMode.ballColor,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    if (currentBall != null) {
+                        BallView(
+                            letter = currentBall.letter,
+                            number = currentBall.number,
+                            color = viewModel.currentMode.ballColor,
+                            modifier = Modifier.scale(scale),
+                            //fontSize = 48.sp
+                        )
+                    }
+                }
+            }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = currentBall?.let { "${it.letter} ${it.number}" } ?: "--",
-                style = MaterialTheme.typography.displayLarge,
-                modifier = Modifier.scale(scale)
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "Balota anterior",
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = previousBall?.let { "${it.letter} ${it.number}" } ?: "--",
-                style = MaterialTheme.typography.headlineMedium
-            )
+            if (previousBall != null) {
+                /*
+                Text(
+                    text = "Anterior",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                */
+                BallView(
+                    letter = previousBall.letter,
+                    number = previousBall.number,
+                    color = viewModel.currentMode.ballColor,
+                    modifier = Modifier.height(120.dp),
+                    fontSize = 24.sp
+                )
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -143,11 +189,29 @@ fun BingoScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-       /*
-        Text("Restante: $remaining%")
+        val animatedProgress by animateFloatAsState(
+            targetValue = remaining/100f,
+            animationSpec = tween(durationMillis = 500),
+            label = "ProgressAnimation"
+        )
 
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = stringResource(id = R.string.remaining_balls, remaining.toInt()),
+                style = MaterialTheme.typography.labelLarge
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            LinearProgressIndicator(
+                progress = { animatedProgress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp)
+            )
+        }
         Spacer(modifier = Modifier.height(16.dp))
-        */
 
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -165,7 +229,7 @@ fun BingoScreen(
                         .weight(1f)
                         .height(48.dp)
                 ) {
-                    Text("Sortear")
+                    Text(stringResource(id = R.string.draw_ball))
                 }
 
                 Button(
@@ -175,7 +239,7 @@ fun BingoScreen(
                         .weight(1f)
                         .height(48.dp)
                 ) {
-                    Text("Reiniciar")
+                    Text(stringResource(id = R.string.reset_game))
                 }
             }
 
@@ -191,31 +255,33 @@ fun BingoScreen(
                 ) {
                     Text(
                         if (viewModel.isAutoMode)
-                            "Detener Auto"
+                            stringResource(id = R.string.stop_auto)
                         else
-                            "Auto"
+                            stringResource(id = R.string.auto)
                     )
                 }
 
-                Button(
-                    onClick = {
-                        if (viewModel.isRepeating) {
-                            viewModel.stopRepeating()
-                        } else {
-                            viewModel.repeatDrawnBalls()
-                        }
-                    },
-                    enabled = viewModel.drawnBalls.isNotEmpty(),
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp)
-                ) {
-                    Text(
-                        if (viewModel.isRepeating)
-                            "Detener Rep."
-                        else
-                            "Repetir"
-                    )
+                if (!isMuted) {
+                    Button(
+                        onClick = {
+                            if (viewModel.isRepeating) {
+                                viewModel.stopRepeating()
+                            } else {
+                                viewModel.repeatDrawnBalls()
+                            }
+                        },
+                        enabled = viewModel.drawnBalls.isNotEmpty(),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                    ) {
+                        Text(
+                            if (viewModel.isRepeating)
+                                stringResource(id = R.string.stop_repeat_drawn_balls)
+                            else
+                                stringResource(id = R.string.repeat_drawn_balls)
+                        )
+                    }
                 }
             }
         }

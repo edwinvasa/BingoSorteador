@@ -17,11 +17,11 @@ class BingoEngine(
         return when (mode) {
             is GameMode.Full -> allBalls
 
-            is GameMode.SingleLetter ->
-                allBalls.filter { it.letter == mode.letter }
-
             is GameMode.LetterX ->
                 allBalls.filter { it.letter != 'N' }
+
+            is GameMode.CustomLetters ->
+                allBalls.filter { it.letter in mode.includedLetters }
         }
     }
 

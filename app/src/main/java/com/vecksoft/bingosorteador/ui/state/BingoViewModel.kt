@@ -1,12 +1,13 @@
 package com.vecksoft.bingosorteador.ui.state
 
+import android.app.Application
 import android.media.AudioManager
 import android.media.ToneGenerator
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.ViewModel
 import com.vecksoft.bingosorteador.domain.Ball
+import com.vecksoft.bingosorteador.domain.BallColor
 import com.vecksoft.bingosorteador.domain.BingoEngine
 import com.vecksoft.bingosorteador.domain.GameMode
 import androidx.lifecycle.viewModelScope
@@ -14,12 +15,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import android.speech.tts.TextToSpeech
 import android.content.Context
+import android.util.Log
+import androidx.lifecycle.AndroidViewModel
+import com.vecksoft.bingosorteador.domain.LanguageManager
 import kotlinx.coroutines.Job
 import java.util.Locale
 
-class BingoViewModel : ViewModel() {
+class BingoViewModel(application: Application) : AndroidViewModel(application) {
 
-    private var engine: BingoEngine = BingoEngine(GameMode.Full)
+    private var engine: BingoEngine = BingoEngine(GameMode.Full())
 
     var currentBall by mutableStateOf<Ball?>(null)
         private set
@@ -36,7 +40,7 @@ class BingoViewModel : ViewModel() {
     var isMuted by mutableStateOf(false)
         private set
 
-    var currentMode by mutableStateOf<GameMode>(GameMode.Full)
+    var currentMode by mutableStateOf<GameMode>(GameMode.Full())
         private set
 
     var isAnimating by mutableStateOf(false)
@@ -47,8 +51,6 @@ class BingoViewModel : ViewModel() {
 
     private val toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 80)
 
-    private var tts: TextToSpeech? = null
-
     var isAutoMode by mutableStateOf(false)
         private set
 
@@ -58,6 +60,22 @@ class BingoViewModel : ViewModel() {
         private set
 
     private var repeatJob: Job? = null
+
+    private var tts: TextToSpeech? = null
+
+    init {
+        tts = TextToSpeech(application) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                val initialLocale = LanguageManager.currentLanguage.value.toLocale()
+                val result = tts?.setLanguage(initialLocale)
+                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    Log.e("TTS", "Language not supported: $initialLocale")
+                }
+            } else {
+                Log.e("TTS", "Initialization failed")
+            }
+        }
+    }
 
     private fun playClick() {
         toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 50)
@@ -104,14 +122,17 @@ class BingoViewModel : ViewModel() {
 
         viewModelScope.launch {
 
-            val steps = 30
+            val animationDurationMs = currentMode.animationDuration
+            val steps = (animationDurationMs / 100).toInt().coerceIn(10, 100)
+
             val startDelay = 30L
-            val endDelay = 250L
+            val endDelay = 150L
 
             for (i in 0 until steps) {
+                if (!isAnimating) break
 
                 previewBall = getRandomAvailableBall()
-                playClick()
+                if (!isMuted) playClick()
 
                 val progress = i.toFloat() / steps.toFloat()
                 val eased = progress * progress
@@ -123,8 +144,26 @@ class BingoViewModel : ViewModel() {
             }
 
             delay(350)
-            toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP2, 150)
+            if (!isMuted) toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP2, 150)
             finalizeDraw()
+        }
+    }
+
+    fun setAnimationDuration(duration: Long) {
+        if (isAnimating) return
+        currentMode = when (val mode = currentMode) {
+            is GameMode.Full -> mode.copy(animationDuration = duration)
+            is GameMode.LetterX -> mode.copy(animationDuration = duration)
+            is GameMode.CustomLetters -> mode.copy(animationDuration = duration)
+        }
+    }
+
+    fun setBallColor(color: BallColor) {
+        if (isAnimating) return
+        currentMode = when (val mode = currentMode) {
+            is GameMode.Full -> mode.copy(ballColor = color)
+            is GameMode.LetterX -> mode.copy(ballColor = color)
+            is GameMode.CustomLetters -> mode.copy(ballColor = color)
         }
     }
 
@@ -152,15 +191,19 @@ class BingoViewModel : ViewModel() {
     }
 
     private fun speakBall(ball: Ball) {
-        val text = "${ball.letter} ${ball.number}"
-        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
+        tts?.let { textToSpeech ->
+            val currentLocale = LanguageManager.currentLanguage.value.toLocale()
+            textToSpeech.language = currentLocale
+            val textToSpeak = "${ball.letter} ${ball.number}"
+            textToSpeech.speak(textToSpeak, TextToSpeech.QUEUE_FLUSH, null, null)
+        }
     }
 
     override fun onCleared() {
-        super.onCleared()
         toneGenerator.release()
         tts?.stop()
         tts?.shutdown()
+        super.onCleared()
     }
 
     fun toggleAutoMode() {

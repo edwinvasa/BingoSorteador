@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BingoSorteador</string>
+
+    <!-- BingoScreen -->
+    <string name="app_title">BINGO</string>
+    <string name="configure_game_mode">Configure game mode</string>
+    <string name="repeating_drawn_balls">Repeating drawn balls…</string>
+    <string name="remaining_balls">Remaining balls (%1$d%%)</string>
+    <string name="draw_ball">Draw Ball</string>
+    <string name="repeat_drawn_balls">Repeat</string>
+    <string name="stop_repeat_drawn_balls">stop rep.</string>
+    <string name="reset_game">Reset</string>
+    <string name="stop_auto">Stop Auto</string>
+    <string name="auto">Auto</string>
+    <string name="previous_ball">Previous</string>
+
+    <!-- GameModeSelector -->
+    <string name="game_mode_title">Game Mode</string>
+    <string name="game_mode_full">Full</string>
+    <string name="game_mode_no_n">No N Letter</string>
+    <string name="game_mode_custom">Custom (select letters)</string>
+    <string name="draw_duration">Draw duration: %.1fs</string>
+    <string name="game_sound_and_voice">Game sound and voice</string>
+    <string name="ball_color">Ball color</string>
+
+    <string name="color_red">Red</string>
+    <string name="color_blue">Blue</string>
+    <string name="color_green">Green</string>
+    <string name="color_orange">Orange</string>
+    <string name="color_purple">Purple</string>
+    <string name="color_white">White</string>
+    <string name="color_yellow">Yellow</string>
+</resources>

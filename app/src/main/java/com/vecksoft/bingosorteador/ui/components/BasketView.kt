@@ -31,7 +31,7 @@ fun BasketView(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp),
+            .height(170.dp),
         contentAlignment = Alignment.Center
     ) {
 

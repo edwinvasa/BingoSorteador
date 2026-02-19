@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BingoSorteador</string>
+
+    <!-- BingoScreen -->
+    <string name="app_title">BINGO</string>
+    <string name="configure_game_mode">Configura la modalità di gioco</string>
+    <string name="repeating_drawn_balls">Ripetizione delle palline estratte</string>
+    <string name="remaining_balls">rimanenti (%1$d%%)</string>
+    <string name="draw_ball">Scheda di estrazione</string>
+    <string name="repeat_drawn_balls">Ripeti</string>
+    <string name="stop_repeat_drawn_balls">Interrompi ripetizione</string>
+    <string name="reset_game">Reimposta</string>
+    <string name="stop_auto">Interrompi automatico</string>
+    <string name="auto">Automatico</string>
+    <string name="previous_ball">Precedente</string>
+
+    <!-- GameModeSelector -->
+    <string name="game_mode_title">Modalità di gioco</string>
+    <string name="game_mode_full">Completa</string>
+    <string name="game_mode_no_n">Nessuna lettera N</string>
+    <string name="game_mode_custom">Personalizzata (seleziona lettere)</string>
+    <string name="draw_duration">Durata</string>
+    <string name="game_sound_and_voice">Suono e voce del gioco</string>
+    <string name="ball_color">Colore della scheda</string>
+
+    <string name="color_red">Rosso</string>
+    <string name="color_blue">Blu</string>
+    <string name="color_green">Verde</string>
+    <string name="color_orange">Arancione</string>
+    <string name="color_purple">Viola</string>
+    <string name="color_white">Bianco</string>
+    <string name="color_yellow">Giallo</string>
+</resources>
