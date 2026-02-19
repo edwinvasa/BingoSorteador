@@ -20,9 +20,7 @@ fun BingoBoard(
     val grouped = drawnBalls.groupBy { it.letter }
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(250.dp),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
 
@@ -39,6 +37,7 @@ fun BingoBoard(
                     .weight(1f)
                     .padding(4.dp)
                     .border(1.dp, MaterialTheme.colorScheme.primary)
+                    .padding(vertical = 8.dp)
             ) {
 
                 Text(
@@ -48,14 +47,12 @@ fun BingoBoard(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                LazyColumn {
-                    items(numbers) { number ->
-                        Text(
-                            text = number.toString(),
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.padding(4.dp)
-                        )
-                    }
+                numbers.forEach { number ->
+                    Text(
+                        text = number.toString(),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(4.dp)
+                    )
                 }
             }
         }

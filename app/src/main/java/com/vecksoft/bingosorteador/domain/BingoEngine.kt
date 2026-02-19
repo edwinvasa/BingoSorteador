@@ -59,4 +59,6 @@ class BingoEngine(
         availableBalls.clear()
         availableBalls.addAll(generateInitialBalls())
     }
+
+    fun availableBalls(): List<Ball> = availableBalls.toList()
 }
